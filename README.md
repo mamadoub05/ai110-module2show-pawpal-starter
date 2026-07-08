@@ -42,16 +42,32 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
+
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
-
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+==================================================
+  PawPal+ Daily Schedule for Jordan
+==================================================
+  08:00  [Mochi]  Feeding  (10 min)  priority: high
+  08:00  [Biscuit]  Morning Walk  (30 min)  priority: high
+  09:00  [Biscuit]  Feeding  (10 min)  priority: high
+  12:00  [Mochi]  Litter Box  (5 min)  priority: medium
+  15:00  [Mochi]  Grooming  (20 min)  priority: low
+  18:00  [Biscuit]  Medication  (5 min)  priority: high
+
+--- Conflict Check ---
+Mochi - Feeding (08:00) conflicts with Biscuit - Morning Walk (08:00)
+
+--- Biscuit's Tasks Only ---
+  08:00  Morning Walk
+  09:00  Feeding
+  18:00  Medication
+
+--- Marking Biscuit's Morning Walk complete ---
+  Next occurrence created: Morning Walk on 2026-07-07
+
+Done.
 ```
 
 ## 🧪 Testing PawPal+

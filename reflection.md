@@ -14,6 +14,7 @@ I designed four classes that are Task, Pet, Owner, and Scheduler. Task holds eve
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+My initial design had the Scheduler holding a flat list of tasks directly, but I changed it so the Scheduler always pulls tasks through the Owner → Pet → Task chain. This keeps data ownership clear so the Pet is always the source of truth for its own tasks, and the Scheduler is just a query layer on top.
 
 ---
 
