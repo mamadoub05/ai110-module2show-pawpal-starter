@@ -1,180 +1,180 @@
-from dataclasses import dataclass, field, replace
+"""
+PawPal+ backend logic.
+Four classes: Task, Pet, Owner, Scheduler.
+"""
+
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Optional
-
-FREQUENCY_DELTAS = {
-    "daily": timedelta(days=1),
-    "weekly": timedelta(days=7),
-    "monthly": timedelta(days=30),
-}
-
-
-def _parse_time_to_minutes(time_str: str) -> Optional[int]:
-    try:
-        hours, minutes = time_str.split(":")
-        return int(hours) * 60 + int(minutes)
-    except (ValueError, AttributeError):
-        return None
-
-
-def _time_sort_key(time_str: str):
-    minutes = _parse_time_to_minutes(time_str)
-    return (minutes is None, minutes or 0)
 
 
 @dataclass
 class Task:
-    """Represents a single activity (description, time, frequency, completion status)."""
+    """Represents a single pet care activity."""
 
     title: str
-    time: str
+    time: str          # "HH:MM" format
     duration_minutes: int
-    priority: str
-    frequency: str
+    priority: str      # "low", "medium", "high"
+    frequency: str     # "once", "daily", "weekly"
     completed: bool = False
-    due_date: str = ""
+    due_date: str = ""  # "YYYY-MM-DD", used for recurring tasks
 
-    def mark_complete(self) -> None:
+    def mark_complete(self):
         """Mark this task as completed."""
         self.completed = True
 
-    def next_occurrence(self) -> "Task":
-        """Return a copy of this task reset for its next due date based on frequency."""
-        delta = FREQUENCY_DELTAS.get(self.frequency)
-        if delta is None or not self.due_date:
-            return replace(self, completed=False)
+    def next_occurrence(self) -> Optional["Task"]:
+        """Return a new Task for the next occurrence if recurring."""
+        if self.frequency == "once":
+            return None
 
-        try:
-            next_due_date = (datetime.strptime(self.due_date, "%Y-%m-%d") + delta).strftime("%Y-%m-%d")
-        except ValueError:
-            next_due_date = self.due_date
+        base = datetime.strptime(self.due_date, "%Y-%m-%d") if self.due_date else datetime.today()
 
-        return replace(self, completed=False, due_date=next_due_date)
+        if self.frequency == "daily":
+            next_date = base + timedelta(days=1)
+        elif self.frequency == "weekly":
+            next_date = base + timedelta(weeks=1)
+        else:
+            return None
+
+        return Task(
+            title=self.title,
+            time=self.time,
+            duration_minutes=self.duration_minutes,
+            priority=self.priority,
+            frequency=self.frequency,
+            completed=False,
+            due_date=next_date.strftime("%Y-%m-%d"),
+        )
 
 
 @dataclass
 class Pet:
-    """Stores pet details and a list of tasks."""
+    """Stores pet info and its list of tasks."""
 
     name: str
     species: str
     age: int
     tasks: List[Task] = field(default_factory=list)
 
-    def add_task(self, task: Task) -> None:
+    def add_task(self, task: Task):
         """Add a task to this pet's task list."""
         self.tasks.append(task)
 
-    def remove_task(self, title: str) -> None:
-        """Remove any task with the given title from this pet's task list."""
-        self.tasks = [task for task in self.tasks if task.title != title]
+    def remove_task(self, title: str):
+        """Remove a task by title."""
+        self.tasks = [t for t in self.tasks if t.title != title]
 
     def get_pending_tasks(self) -> List[Task]:
-        """Return this pet's tasks that are not yet completed."""
-        return [task for task in self.tasks if not task.completed]
+        """Return only incomplete tasks."""
+        return [t for t in self.tasks if not t.completed]
 
 
 @dataclass
 class Owner:
-    """Manages multiple pets and provides access to all their tasks."""
+    """Manages an owner's profile and their pets."""
 
     name: str
     pets: List[Pet] = field(default_factory=list)
 
-    def add_pet(self, pet: Pet) -> None:
-        """Add a pet to this owner's list of pets."""
+    def add_pet(self, pet: Pet):
+        """Add a pet to the owner's list."""
         self.pets.append(pet)
 
     def get_all_tasks(self) -> List[Task]:
-        """Return every task across all of this owner's pets."""
-        return [task for pet in self.pets for task in pet.tasks]
+        """Return all tasks across all pets."""
+        all_tasks = []
+        for pet in self.pets:
+            all_tasks.extend(pet.tasks)
+        return all_tasks
 
     def get_pet(self, name: str) -> Optional[Pet]:
-        """Return the pet with the given name, or None if not found."""
+        """Look up a pet by name."""
         for pet in self.pets:
-            if pet.name == name:
+            if pet.name.lower() == name.lower():
                 return pet
         return None
 
 
-@dataclass
 class Scheduler:
-    """The "Brain" that retrieves, organizes, and manages tasks across pets."""
+    """The brain — retrieves, sorts, filters, and manages tasks across pets."""
 
-    owner: Owner
+    def __init__(self, owner: Owner):
+        """Initialize the scheduler with an owner."""
+        self.owner = owner
 
     def get_all_tasks(self) -> List[Task]:
-        """Return every task across all pets managed by the owner."""
+        """Retrieve all tasks from all pets."""
         return self.owner.get_all_tasks()
 
-    def sort_by_time(self, tasks: List[Task]) -> List[Task]:
-        """Return the given tasks sorted chronologically by their time."""
-        return sorted(tasks, key=lambda task: _time_sort_key(task.time))
+    def sort_by_time(self, tasks: Optional[List[Task]] = None) -> List[Task]:
+        """Sort tasks chronologically by their time field (HH:MM)."""
+        tasks = tasks if tasks is not None else self.get_all_tasks()
+        return sorted(tasks, key=lambda t: t.time)
 
     def filter_by_pet(self, pet_name: str) -> List[Task]:
-        """Return the tasks belonging to the pet with the given name."""
+        """Return tasks belonging to a specific pet."""
         pet = self.owner.get_pet(pet_name)
-        return list(pet.tasks) if pet else []
+        if not pet:
+            return []
+        return pet.tasks
 
-    def filter_by_status(self, completed: bool) -> List[Task]:
-        """Return all tasks matching the given completion status."""
-        return [task for task in self.get_all_tasks() if task.completed == completed]
+    def filter_by_status(self, completed: bool = False) -> List[Task]:
+        """Return tasks filtered by completion status."""
+        return [t for t in self.get_all_tasks() if t.completed == completed]
 
     def detect_conflicts(self) -> List[str]:
-        """Return descriptions of any tasks whose time windows overlap."""
-        entries = [
-            (pet, task)
-            for pet in self.owner.pets
-            for task in pet.tasks
-            if _parse_time_to_minutes(task.time) is not None
-        ]
-
-        conflicts = []
-        for i in range(len(entries)):
-            pet_a, task_a = entries[i]
-            start_a = _parse_time_to_minutes(task_a.time)
-            end_a = start_a + task_a.duration_minutes
-
-            for j in range(i + 1, len(entries)):
-                pet_b, task_b = entries[j]
-                start_b = _parse_time_to_minutes(task_b.time)
-                end_b = start_b + task_b.duration_minutes
-
-                if start_a < end_b and start_b < end_a:
-                    conflicts.append(
-                        f"{pet_a.name} - {task_a.title} ({task_a.time}) conflicts with "
-                        f"{pet_b.name} - {task_b.title} ({task_b.time})"
-                    )
-
-        return conflicts
+        """
+        Check for tasks scheduled at the exact same time.
+        Returns a list of warning strings, empty if no conflicts.
+        """
+        warnings = []
+        tasks = self.get_all_tasks()
+        seen = {}
+        for task in tasks:
+            if task.time in seen:
+                warnings.append(
+                    f"⚠️ Conflict at {task.time}: '{seen[task.time]}' and '{task.title}' overlap."
+                )
+            else:
+                seen[task.time] = task.title
+        return warnings
 
     def mark_task_complete(self, pet_name: str, task_title: str) -> Optional[Task]:
-        """Mark the named task for the named pet as complete, returning it if found."""
+        """
+        Mark a task complete and auto-create next occurrence if recurring.
+        Returns the new Task if one was created, else None.
+        """
         pet = self.owner.get_pet(pet_name)
-        if pet is None:
+        if not pet:
             return None
 
         for task in pet.tasks:
-            if task.title == task_title:
+            if task.title == task_title and not task.completed:
                 task.mark_complete()
-                return task
+                next_task = task.next_occurrence()
+                if next_task:
+                    pet.add_task(next_task)
+                return next_task
 
         return None
 
     def build_daily_schedule(self) -> List[dict]:
-        """Return every task across all pets as a time-sorted schedule of dicts."""
-        entries = [
-            {
-                "pet": pet.name,
-                "title": task.title,
-                "time": task.time,
-                "duration_minutes": task.duration_minutes,
-                "priority": task.priority,
-                "completed": task.completed,
-            }
-            for pet in self.owner.pets
-            for task in pet.tasks
-        ]
-
-        entries.sort(key=lambda entry: _time_sort_key(entry["time"]))
-        return entries
+        """
+        Build a sorted daily schedule of pending tasks with pet labels.
+        Returns list of dicts for easy display.
+        """
+        schedule = []
+        for pet in self.owner.pets:
+            for task in pet.get_pending_tasks():
+                schedule.append({
+                    "time": task.time,
+                    "pet": pet.name,
+                    "task": task.title,
+                    "duration": task.duration_minutes,
+                    "priority": task.priority,
+                    "frequency": task.frequency,
+                })
+        schedule.sort(key=lambda x: x["time"])
+        return schedule
