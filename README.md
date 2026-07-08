@@ -73,18 +73,30 @@ Done.
 ## 🧪 Testing PawPal+
 
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+Test output:
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+collected 11 items
+
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED
+tests/test_pawpal.py::test_completed_task_not_in_pending PASSED
+tests/test_pawpal.py::test_add_task_increases_count PASSED
+tests/test_pawpal.py::test_sort_by_time_is_chronological PASSED
+tests/test_pawpal.py::test_sort_handles_single_task PASSED
+tests/test_pawpal.py::test_conflict_detected_same_time PASSED
+tests/test_pawpal.py::test_no_conflict_different_times PASSED
+tests/test_pawpal.py::test_daily_task_creates_next_occurrence PASSED
+tests/test_pawpal.py::test_once_task_does_not_recur PASSED
+tests/test_pawpal.py::test_filter_by_pet_returns_correct_tasks PASSED
+tests/test_pawpal.py::test_filter_by_status_pending PASSED
+
+============================== 11 passed in 0.03s ==============================
 ```
+My confidence level is a 4
 
 ## 📐 Smarter Scheduling
 
