@@ -29,6 +29,7 @@ My initial design had the Scheduler holding a flat list of tasks directly, but I
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+The conflict detection only flags tasks that share an exact time string rather than checking for overlapping time windows. For example, a 30-minute walk starting at 08:00 and a 10-minute feeding starting at 08:15 would not be flagged even though they overlap in real time. This tradeoff is reasonable for a daily planning tool used by a single owner because exact-time conflicts are the most common mistake, and checking duration overlap would require more complex interval arithmetic that adds complexity without much benefit for this use case.
 
 ---
 
