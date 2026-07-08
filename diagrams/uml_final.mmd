@@ -8,8 +8,9 @@ classDiagram
         +bool completed
         +str due_date
         +mark_complete()
-        +next_occurrence() Task
+        +next_occurrence() Task?
     }
+    note for Task "next_occurrence() returns None\nwhen frequency is 'once'"
 
     class Pet {
         +str name
@@ -32,15 +33,18 @@ classDiagram
     class Scheduler {
         +Owner owner
         +get_all_tasks() List~Task~
-        +sort_by_time(tasks) List~Task~
+        +sort_by_time(tasks?) List~Task~
         +filter_by_pet(pet_name) List~Task~
-        +filter_by_status(completed) List~Task~
+        +filter_by_status(completed=False) List~Task~
         +detect_conflicts() List~str~
-        +mark_task_complete(pet_name, task_title) Task
+        +mark_task_complete(pet_name, task_title) Task?
         +build_daily_schedule() List~dict~
     }
+    note for Scheduler "mark_task_complete() marks the old\ntask complete, then creates and returns\nthe NEXT occurrence (or None if not\nrecurring). detect_conflicts() flags\nexact same-time matches only.\nbuild_daily_schedule() includes only\npending tasks."
 
     Owner "1" --> "many" Pet : owns
     Pet "1" --> "many" Task : has
     Scheduler "1" --> "1" Owner : manages
+    Scheduler ..> Task : creates next occurrence
+    Scheduler ..> Pet : adds recurring task
 

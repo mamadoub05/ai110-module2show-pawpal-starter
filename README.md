@@ -2,6 +2,17 @@
 
 You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
 
+## Features
+
+- **Chronological sorting** — orders tasks by `HH:MM` time.
+- **Pet-scoped filtering** — retrieves tasks for one named pet.
+- **Status filtering** — toggles between pending and completed tasks.
+- **Pending-task lookup** — returns a pet's incomplete tasks directly.
+- **Conflict warnings** — flags tasks scheduled at the exact same time across pets.
+- **Daily & weekly recurrence** — generates the next occurrence of a recurring task; one-time tasks don't recur.
+- **Auto-recurrence on completion** — completing a recurring task automatically schedules and re-adds its next occurrence.
+- **Daily schedule builder** — aggregates every pet's pending tasks into one time-sorted, display-ready schedule.
+
 ## Scenario
 
 A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
@@ -100,24 +111,24 @@ My confidence level is a 4
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | Scheduler.sort_by_time() | Sorts by HH:MM string, chronological order|
-| Filtering by pet | Scheduler.filter_by_pet()| Returns tasks for one named pet |
-| Filtering by status | Scheduler.filter_by_status()| Toggle between pending and completed|
-| Conflict detection | Scheduler.detect_conflicts()| Exact time-match check, returns warning strings |
-| Recurring tasks|Task.next_occurrence() + Scheduler.mark_task_complete() | Uses timedelta for daily/weekly scheduling|
- 
+| Chronological sorting | Scheduler.sort_by_time() | Sorts by HH:MM string, chronological order; defaults to the full task list when none is passed |
+| Pet-scoped filtering | Scheduler.filter_by_pet() | Returns tasks for one named pet (case-insensitive lookup via Owner.get_pet()) |
+| Status filtering | Scheduler.filter_by_status() | Toggle between pending and completed, defaults to pending |
+| Pending-task lookup | Pet.get_pending_tasks() | Returns a pet's incomplete tasks directly, without going through the Scheduler |
+| Conflict warnings | Scheduler.detect_conflicts() | Exact time-match check across all pets, returns warning strings |
+| Daily & weekly recurrence | Task.next_occurrence() | Builds the next Task using timedelta for "daily"/"weekly"; "once" tasks return None |
+| Auto-recurrence on completion | Scheduler.mark_task_complete() | Marks a task done, then creates and re-adds its next occurrence to the pet's task list |
+| Daily schedule builder | Scheduler.build_daily_schedule() | Aggregates every pet's pending tasks into one time-sorted, display-ready list |
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Enter your name and click Set Owner to initialize the app.
+2. Add a pet by entering its name, species, and age, then click Add Pet.
+3. Add tasks to your pet — set a title, time (HH:MM), duration, priority, and frequency.
+4. Click Generate Schedule to see today's sorted plan. Any time conflicts appear as yellow warnings above the table.
+5. Use the Mark Task Complete section to check off a task. Daily and weekly tasks automatically generate their next occurrence.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
